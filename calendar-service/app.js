@@ -24,17 +24,7 @@ function someDaysBeyond(days) {
   return currentDate;
 }
 
-app.use(express.json());
-
-app.get("/events", (req, res) => {
-  let user_id = req.query.user_id
-  if (!user_id) {
-    res.send("User Does Not Exist", 404)
-    return
-  }
-
-  res.json({
-    events: [
+const events = [
       {
         id: 1,
         name: "Hangout",
@@ -68,8 +58,65 @@ app.get("/events", (req, res) => {
         timeZone: "America/Los_Angeles"
       }
     ]
+
+app.use(express.json());
+
+function eventsRouteHandler(req, res) {
+  let user_id = req.query.user_id
+  if (!user_id) {
+    res.send("User Does Not Exist", 404)
+    return
+  }
+
+  res.json({
+    events
   })
-});
+}
+
+function filterEvents(events, startDate, endDate) {
+  return events.filter(event => {
+    const eventDate = new Date(event.date)
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    return eventDate >= start && eventDate <= end
+  });
+}
+
+function dateStringValidator(dateString) {
+  const date = new Date(dateString);
+  return !isNaN(date.getTime());
+}
+
+function eventsDateRangeHandler(req, res) {
+  let startDate = req.query.start_date
+  let endDate = req.query.end_date
+
+  if (!startDate || !endDate) {
+    res.send("Not a valid date range", 400)
+    return
+  }
+
+  if (dateStringValidator(startDate) === false || dateStringValidator(endDate) === false) {
+    res.send("One of the provide date parameters is invalid", 400)
+    return
+  }
+
+  const filteredData = filterEvents(events, startDate, endDate);
+
+  if (filteredData.length > 0) {
+    res.json({
+      events: filteredData
+    });
+  } else {
+    res.json({
+      "message": "No events found for the given date range"
+    });
+  }
+}
+
+app.get("/events", eventsRouteHandler);
+
+app.get("/events_by_date_range", eventsDateRangeHandler);
 
 app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
