@@ -1,0 +1,13 @@
+common: &common
+  port: 8000
+development:
+  <<: *common
+  user_service:
+    base_url: 'http://user-service'
+    endpoint: '/users'
+  subscriptions:
+    base_url: 'http://billing-service'
+    endpoint: '/subscriptions'
+  events:
+    base_url: 'http://calendar-service'
+    endpoint: '/events'

@@ -67,7 +67,6 @@ class SubscriptionResource:
         else:
             logger.debug(f"Subscription found: {subscription}")
             response.status = falcon.HTTP_OK
-            del subscription["plan"]
             response.body = json.dumps(subscription)
 
 
