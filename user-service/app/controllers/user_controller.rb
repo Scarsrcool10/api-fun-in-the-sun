@@ -20,7 +20,14 @@ class UserController < ApplicationController
   def all_users
     if @user
       if @user["role"] == "admin"
-        render json: USERS.map{ |f| [ "id": f["id"], "first_name": f["first_name"], "last_name": f["last_name"], "position": f["position"]] }
+        render json: USERS.map{ |f|
+          [
+          "id": f["id"],
+          "first_name": f["first_name"],
+          "last_name": f["last_name"],
+          "position": f["position"],
+          "additional_details": build_callback_urls(f["id"])
+        ] }
       else
         render json: { "message": "User does not have sufficient privileges to view this data." }, status: :bad_request
       end
@@ -30,6 +37,13 @@ class UserController < ApplicationController
   end
 
   private
+
+  def build_callback_urls(user_id)
+    {
+      "user_summary_url": "http://dashboard-api:8000/summary/#{user_id}",
+      "user_events_url": "http://calender-service:8000/events?user_id=#{user_id}",
+    }
+  end
 
   def user
     @user ||= USERS.find{ |x| x["id"] == params[:user_id].to_i }
