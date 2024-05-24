@@ -67,9 +67,35 @@ class SubscriptionResource:
         else:
             logger.debug(f"Subscription found: {subscription}")
             response.status = falcon.HTTP_OK
-            del subscription["plan"]
             response.body = json.dumps(subscription)
 
+def calculate_total_sub(sub_data):
+    if sub_data["plan"] == 'yearly':
+        return { "annual_cost_in_cents": sub_data["price_cents"] }
+    elif sub_data["plan"] == "monthly":
+        return { "annual_cost_in_cents": sub_data["price_cents"] * 12 }
+    return None
+
+class TotalSubscriptionCost:
+    def on_get(self, request, response):
+        user_id = int(request.get_param('user_id'))
+
+        sub_data = get_subscription(user_id)
+
+        response.content_type = falcon.MEDIA_JSON
+
+        if not sub_data:
+            logger.debug("Subscription not found")
+            response.status = falcon.HTTP_NOT_FOUND
+            response.body = json.dumps({
+                "message": f"No subscription found for user_id [{user_id}]"
+            })
+        else:
+            calculated_total = calculate_total_sub(sub_data)
+            logger.debug(f"Subscription total found: {calculated_total}")
+            response.status = falcon.HTTP_OK
+            response.body = json.dumps(calculated_total)
 
 app = falcon.App()
 app.add_route('/subscriptions', SubscriptionResource())
+app.add_route('/total_subscription_cost', TotalSubscriptionCost())
